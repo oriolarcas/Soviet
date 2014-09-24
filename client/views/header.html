@@ -1,0 +1,17 @@
+<header class="navbar navbar-default navbar-fixed-top">
+	<div class="navbar-inner" data-ng-controller="headerController">
+		<div class="container">
+			<ul class="nav navbar-nav">
+				<a class="navbar-brand" role="button" href="#">Soviet</a>
+				<li class="dropdown">
+					<a class="dropdown-toggle">Notificacions</a>
+					<ul class="dropdown-menu">
+						<li data-ng-repeat="notification in notifications">
+							<a href="{{ notification.action }}">{{ notification.description }}</a>
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</div>
+	</div>
+</header>
