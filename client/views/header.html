@@ -4,9 +4,13 @@
 			<ul class="nav navbar-nav">
 				<a class="navbar-brand" role="button" href="#">Soviet</a>
 				<li class="dropdown">
-					<a class="dropdown-toggle">Notificacions</a>
+					<a class="btn btn-default dropdown-toggle" data-ng-disabled="!(notifications | filter:{seen:false} | count)">
+						Notificacions
+						<span class="caret" data-ng-if="notifications | filter:{seen:false} | count" ></span>
+						<span data-ng-if="notifications | filter:{seen:false} | count" class="badge">{{ notifications | filter:{seen:false} | count }}</span>
+					</a>
 					<ul class="dropdown-menu">
-						<li data-ng-repeat="notification in notifications">
+						<li data-ng-repeat="notification in notifications" data-ng-class="{'dropdown-highlight':!notification.seen}">
 							<a href="{{ notification.action }}">{{ notification.description }}</a>
 						</li>
 					</ul>
