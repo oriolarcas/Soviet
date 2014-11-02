@@ -1,0 +1,34 @@
+/*
+Theme Name: Soviet
+Theme URI: https://github.com/oriolarcas/Soviet
+Author: Oriol Arcas
+Author URI: https://github.com/oriolarcas/
+Description: A Single Page Application using AngularJS, featuring a Wordpress-based groupware.
+Version: 1.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Tags: flexible-width, responsive, single page application
+Text Domain: soviet-frontend
+
+This theme, like WordPress, is licensed under the GPL.
+Use it to make something cool, have fun, and share what you've learned with others.
+*/
+
+
+.header-placeholder {
+	height: 60px;
+}
+
+.dropdown-highlight a {
+	background-color: #3071a9 !important;
+	color: #FFF !important;
+}
+
+.dropdown-highlight:hover a,
+.dropdown-highlight:focus a,
+.dropdown-highlight:active a,
+.dropdown-highlight.active a {
+	background-color: #428bca !important;
+	color: #FFF !important;
+}
+

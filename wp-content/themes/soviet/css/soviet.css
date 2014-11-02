@@ -1,0 +1,18 @@
+
+.header-placeholder {
+	height: 60px;
+}
+
+.dropdown-highlight a {
+	background-color: #3071a9 !important;
+	color: #FFF !important;
+}
+
+.dropdown-highlight:hover a,
+.dropdown-highlight:focus a,
+.dropdown-highlight:active a,
+.dropdown-highlight.active a {
+	background-color: #428bca !important;
+	color: #FFF !important;
+}
+
