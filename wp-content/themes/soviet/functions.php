@@ -23,6 +23,4 @@ function soviet_scripts() {
 
 add_action( 'wp_enqueue_scripts', 'soviet_scripts' );
 
-
-
 ?>

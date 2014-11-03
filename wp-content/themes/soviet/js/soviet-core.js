@@ -8,6 +8,14 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ui.bootstrap' ])
 					);
 			}};
 		}])
+	.factory('activityFactory', [ '$http', function($http) {
+			return {getData: function() {
+				return $http.get(
+						WPAPI.url+'/bp?_wp_json_nonce='+WPAPI.nonce,
+						{cache: true}
+					);
+			}};
+		}])
 	.config([ '$routeProvider', '$locationProvider',
 		function ($routeProvider, $locationProvider) {
 			$routeProvider
