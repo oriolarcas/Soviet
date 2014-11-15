@@ -1,20 +1,55 @@
 
-var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ui.bootstrap' ])
-	.factory('userFactory', [ '$http', function($http) {
-			return {getData: function() {
-				return $http.get(
-						WPAPI.url+'/users/'+WPAPI.uid+'?_wp_json_nonce='+WPAPI.nonce,
-						{cache: true}
-					);
-			}};
+var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.bootstrap' ])
+	.factory('userFactory', [ '$resource',
+		function($resource) {
+			return $resource(
+				WPAPI.url+'/users/:uid',
+				{_wp_json_nonce:WPAPI.nonce, uid:WPAPI.uid},
+				{get: {method:'GET', cache:true}} // override 'get' method
+				);
 		}])
-	.factory('activityFactory', [ '$http', function($http) {
-			return {getData: function() {
-				return $http.get(
-						WPAPI.url+'/bp?_wp_json_nonce='+WPAPI.nonce,
-						{cache: true}
-					);
-			}};
+	.factory('activityFactory', [ '$resource',
+		function($resource) {
+			/* Note: custom $reosurce methods can only be used in
+			 * objects returned by get() queries
+			 */
+			
+/*
+ *     @type string|bool $scope Use one of BuddyPress's pre-built filters. In
+ *           each case, the term 'current user' refers to the displayed user
+ *           when looking at a user profile, and otherwise to the logged-in user.
+ *             - 'just-me' retrieves items belonging only to the logged-in user;
+ *               this is equivalent to passing a 'user_id' argument
+ *             - 'friends' retrieves items belonging to the friends of the
+ *               current user
+ *             - 'groups' retrieves items associated with the groups to which
+ *               the current user belongs
+ *             - 'favorites' retrieves the current user's favorited activity
+ *               items
+ *             - 'mentions' retrieves activity items where the current user has
+ *               received an @-mention
+ *           The default value of 'scope' is set to one of the above if that
+ *           value appears in the appropriate place in the URL; eg, 'scope' will
+ *           be 'groups' when visiting http://example.com/members/joe/activity/groups/.
+ *           Otherwise defaults to false.
+ */
+			return {
+				site_wide:$resource(
+					WPAPI.url+'/bp/activity',
+					{_wp_json_nonce:WPAPI.nonce, 'scope':'all'},
+					{get: {method:'GET', cache:true}} // override 'get' method
+					),
+				groups:$resource(
+					WPAPI.url+'/bp/activity',
+					{_wp_json_nonce:WPAPI.nonce, 'scope':'groups'},
+					{get: {method:'GET', cache:true}} // override 'get' method
+					),
+				mentions:$resource(
+					WPAPI.url+'/bp/activity',
+					{_wp_json_nonce:WPAPI.nonce, 'scope':'mentions'},
+					{get: {method:'GET', cache:true}} // override 'get' method
+					)
+				};
 		}])
 	.config([ '$routeProvider', '$locationProvider',
 		function ($routeProvider, $locationProvider) {
@@ -24,23 +59,31 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ui.bootstrap' ])
 					controller:  'bootController',
 					isBoot: true
 				})
+				.when('/login', {
+					templateUrl: Directory.url + '/views/login.html'
+				})
 				.when('/main', {
 					templateUrl: Directory.url + '/views/main.html',
 					controller:  'mainController',
-					resolve: {'userData': ['userFactory', function (userFactory) {
-						return userFactory.getData().then(function (response) {
-							console.log('main view resolved');
-						});
+					resolve: {'userData': ['activityFactory', function (activityFactory) {
+						var q = activityFactory.groups.get();
+						console.log(q);
+						return q.$promise;
 					}]}
 				})
 				.otherwise({ redirectTo: '/' });
 		}])
 	.run(['$rootScope', '$location', function($rootScope, $location){
 			$rootScope.wpBaseDir = Directory.url;
-			$rootScope.$on('$routeChangeSuccess', function(event, current, previous) {
+			/*$rootScope.$on('$routeChangeSuccess', function(event, current, previous) {
 				if (current.isBoot) {
 					console.log("Boot: redirecting to main view");
 					$location.path('/main');
+				}
+			});*/
+			$rootScope.$on('$routeChangeError', function(event, current, previous, rejection) {
+				if (rejection.status == 403) {
+					$location.path('/login');
 				}
 			});
 		}])
@@ -57,19 +100,13 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ui.bootstrap' ])
 				return s || alt;
 			};
 		})
-	.controller('bootController', [ '$scope', '$timeout',
-		function ($scope, $timeout) {
-			$scope.bootprogress = 0;
-			var updateboot = function() {
-				console.log('bootprogress = '+$scope.bootprogress);
-				$scope.bootprogress += 5;	
-				if ($scope.bootprogress < 100)
-					$timeout(updateboot, 500);
-			};
-			$timeout(updateboot, 500);
+	.controller('bootController', [ '$scope', '$location',
+		function ($scope, $location) {
+			$location.path('/main');
+			console.log("Boot: redirecting to main view");
 		}])
-	.controller('mainController', [ '$scope', '$rootScope', '$route', 'userFactory',
-		function ($scope, $rootScope, $route, userFactory) {
+	.controller('mainController', [ '$scope', '$rootScope', '$route', 'userFactory', 'activityFactory',
+		function ($scope, $rootScope, $route, userFactory, activityFactory) {
 			$scope.groups = {
 				1: { name: 'Col·lectiu Diagonal' },
 				3: { name: 'Comitè Universitat' },
@@ -78,9 +115,10 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ui.bootstrap' ])
 			$scope.user = { name: 'Oriol', groups: [1, 3, 4], role: 'admin', wpjson: { } };
 			// We could use '/users/me' but that causes HTTP redirect,
 			// and $http does not add the _wp_json_nonce in the second request
-			userFactory.getData().then(function (response) {
+			activityFactory.groups.get(function (response) {
 				console.log('getting userFactory data');
-				$scope.user.wpjson = response.data;
+				console.log(response);
+				$scope.user.wpjson = response;
 			});
 			$scope.isCollapsed = false;
 		}])
