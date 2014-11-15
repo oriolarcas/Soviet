@@ -8,6 +8,14 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.boots
 				{get: {method:'GET', cache:true}} // override 'get' method
 				);
 		}])
+	.factory('groupsFactory', [ '$resource',
+		function($resource) {
+			return $resource(
+				WPAPI.url+'/bp/groups',
+				{_wp_json_nonce:WPAPI.nonce},
+				{query: {method:'GET', isArray:true, cache:true}} // override 'query' method
+				);
+		}])
 	.factory('activityFactory', [ '$resource',
 		function($resource) {
 			/* Note: custom $reosurce methods can only be used in
@@ -105,19 +113,24 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.boots
 			$location.path('/main');
 			console.log("Boot: redirecting to main view");
 		}])
-	.controller('mainController', [ '$scope', '$rootScope', '$route', 'userFactory', 'activityFactory',
-		function ($scope, $rootScope, $route, userFactory, activityFactory) {
+	.controller('mainController', [ '$scope', '$rootScope', '$route',
+			'userFactory', 'groupsFactory', 'activityFactory',
+		function ($scope, $rootScope, $route,
+				userFactory, groupsFactory, activityFactory) {
+			groupsFactory.query(function (response) {
+				$scope.groups = response;
+			});
+			/*
 			$scope.groups = {
 				1: { name: 'Col·lectiu Diagonal' },
 				3: { name: 'Comitè Universitat' },
 				4: { name: 'Comitè Central' }
 				};
-			$scope.user = { name: 'Oriol', groups: [1, 3, 4], role: 'admin', wpjson: { } };
+			*/
+			$scope.user = { name: 'Oriol', groups: [0], role: 'admin', wpjson: { } };
 			// We could use '/users/me' but that causes HTTP redirect,
 			// and $http does not add the _wp_json_nonce in the second request
-			activityFactory.groups.get(function (response) {
-				console.log('getting userFactory data');
-				console.log(response);
+			groupsFactory.query(function (response) {
 				$scope.user.wpjson = response;
 			});
 			$scope.isCollapsed = false;
