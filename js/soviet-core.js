@@ -2,19 +2,29 @@
 var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.bootstrap' ])
 	.factory('userFactory', [ '$resource',
 		function($resource) {
-			return $resource(
-				WPAPI.url+'/users/:uid',
-				{_wp_json_nonce:WPAPI.nonce, uid:WPAPI.uid},
-				{get: {method:'GET', cache:true}} // override 'get' method
-				);
+			return {
+				wordpress:$resource(
+					WPAPI.url+'/users/:uid',
+					{_wp_json_nonce:WPAPI.nonce, uid:WPAPI.uid},
+					{get: {method:'GET', cache:true}} // override 'get' method
+					),
+				buddypress:$resource(
+					WPAPI.url+'/bp/xprofile',
+					{_wp_json_nonce:WPAPI.nonce},
+					{get: {method:'GET', cache:true}} // override 'get' method
+					)
+				};
 		}])
 	.factory('groupsFactory', [ '$resource',
 		function($resource) {
-			return $resource(
-				WPAPI.url+'/bp/groups',
-				{_wp_json_nonce:WPAPI.nonce},
-				{query: {method:'GET', isArray:true, cache:true}} // override 'query' method
-				);
+			return {
+				groups:$resource(WPAPI.url+'/bp/groups',
+					{_wp_json_nonce:WPAPI.nonce},
+					{query: {method:'GET', isArray:true, cache:true}}), // override 'query' method
+				user_groups:$resource(WPAPI.url+'/bp/groups/user/:uid',
+					{_wp_json_nonce:WPAPI.nonce},
+					{query: {method:'GET', params:{uid:WPAPI.uid}, isArray:true, cache:true}}) // override 'query' method
+				};
 		}])
 	.factory('activityFactory', [ '$resource',
 		function($resource) {
@@ -44,17 +54,17 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.boots
 			return {
 				site_wide:$resource(
 					WPAPI.url+'/bp/activity',
-					{_wp_json_nonce:WPAPI.nonce, 'scope':'all'},
+					{_wp_json_nonce:WPAPI.nonce},
 					{get: {method:'GET', cache:true}} // override 'get' method
 					),
 				groups:$resource(
-					WPAPI.url+'/bp/activity',
-					{_wp_json_nonce:WPAPI.nonce, 'scope':'groups'},
+					WPAPI.url+'/bp/activity/groups',
+					{_wp_json_nonce:WPAPI.nonce},
 					{get: {method:'GET', cache:true}} // override 'get' method
 					),
 				mentions:$resource(
-					WPAPI.url+'/bp/activity',
-					{_wp_json_nonce:WPAPI.nonce, 'scope':'mentions'},
+					WPAPI.url+'/bp/activity/mentions',
+					{_wp_json_nonce:WPAPI.nonce},
 					{get: {method:'GET', cache:true}} // override 'get' method
 					)
 				};
@@ -117,8 +127,14 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.boots
 			'userFactory', 'groupsFactory', 'activityFactory',
 		function ($scope, $rootScope, $route,
 				userFactory, groupsFactory, activityFactory) {
-			groupsFactory.query(function (response) {
-				$scope.groups = response;
+			$scope.user = {profile:{}, groups:{}};
+			userFactory.wordpress.get(function (profile) {
+				$scope.user.profile = profile;
+			});
+			groupsFactory.user_groups.query(function (groups) {
+				angular.forEach(groups, function (group) {
+					$scope.user.groups[group.id] = group;
+				});
 			});
 			/*
 			$scope.groups = {
@@ -127,12 +143,7 @@ var sovietApp = angular.module('sovietApp', [ 'ngRoute', 'ngResource', 'ui.boots
 				4: { name: 'Comitè Central' }
 				};
 			*/
-			$scope.user = { name: 'Oriol', groups: [0], role: 'admin', wpjson: { } };
-			// We could use '/users/me' but that causes HTTP redirect,
-			// and $http does not add the _wp_json_nonce in the second request
-			groupsFactory.query(function (response) {
-				$scope.user.wpjson = response;
-			});
+			$scope.wpjson = $scope.user;
 			$scope.isCollapsed = false;
 		}])
 	.controller('headerController', [ '$scope', '$route',

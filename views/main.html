@@ -7,7 +7,7 @@
 				</div>
 				<div class="panel-body">
 					<div class="list-group">
-						<a href="#" class="list-group-item" data-ng-repeat="mygroup in user.groups">{{ groups[mygroup].name }}</a>
+						<a href="#" class="list-group-item" data-ng-repeat="mygroup in user.groups">{{ mygroup.name }}</a>
 					</div>
 				</div>
 			</div>
@@ -18,7 +18,7 @@
 					<h3 class="panel-title">El teu mur</h3>
 				</div>
 				<div class="panel-body">
-					{{ user.wpjson }}
+					{{ wpjson }}
 				</div>
 			</div>
 		</div>
